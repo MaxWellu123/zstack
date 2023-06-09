@@ -1005,6 +1005,7 @@ public class RestServer implements Component, CloudBusEventListener {
         }
 
         // a query with conditions
+        // 遍历所有参数
         for (Map.Entry<String, String[]> e : vars.entrySet()) {
             String varname = e.getKey().trim();
             String varvalue = e.getValue()[0].trim();
@@ -1042,12 +1043,16 @@ public class RestServer implements Component, CloudBusEventListener {
 
                 msg.setSortBy(varvalue);
             } else if ("q".startsWith(varname)) {
+                // 获取q对象值
                 String[] conds = e.getValue();
 
+                // 遍历所有的参数值
                 for (String cond : conds) {
                     String OP = null;
                     String delimiter = null;
+                    // 遍历所有条件值
                     for (String op : QUERY_OP_MAPPING.keySet()) {
+                        // 判断是否包含条件
                         if (cond.contains(op)) {
                             OP = QUERY_OP_MAPPING.get(op);
                             delimiter = op;
@@ -1055,14 +1060,20 @@ public class RestServer implements Component, CloudBusEventListener {
                         }
                     }
 
+                    // 如果一个条件都没有匹配到报错
                     if (OP == null) {
                         throw new RestException(HttpStatus.BAD_REQUEST.value(), String.format("Invalid query parameter." +
                                 " The '%s' in the parameter[q] doesn't contain any query operator. Valid query operators are" +
                                 " %s", cond, asList(QUERY_OP_MAPPING.keySet())));
                     }
 
+                    // 构建条件对象
                     QueryCondition qc = new QueryCondition();
+                     // 切割
+                    // q=name=zhangsan
+                    // ["q","name=zhangsan"]
                     String[] ks = StringUtils.splitByWholeSeparator(cond, delimiter, 2);
+                    // 判断操作是否是is null 或者是 is not null
                     if (OP.equals(QueryOp.IS_NULL.toString()) || OP.equals(QueryOp.NOT_NULL.toString())) {
                         String cname = ks[0].trim();
                         qc.setName(cname);
@@ -1073,6 +1084,7 @@ public class RestServer implements Component, CloudBusEventListener {
                                     " The '%s' in parameter[q] is not a key-value pair split by %s", cond, OP));
                         }
 
+                        // 赋值
                         String cname = ks[0].trim();
                         String cvalue = ks[1]; // don't trim the value, a space is valid in some conditions
                         qc.setName(cname);
